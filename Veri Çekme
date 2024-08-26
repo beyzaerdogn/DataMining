@@ -1,0 +1,50 @@
+import requests
+from bs4 import BeautifulSoup as bs
+
+adres = "https://www.sikayetvar.com/telefon"
+baslik={"user-agent":"Mozilla/5.0 (X11; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0"}
+# Sayfayı çek ve içeriği al
+response = requests.get(adres, headers=baslik)
+print(f"HTTP Durum Kodu: {response.status_code}")  # İsteğin başarılı olup olmadığını kontrol edin
+
+sayfa = response.content
+
+# BeautifulSoup ile sayfayı parse et
+soup = bs(sayfa, features="html.parser")
+
+# Sayfa yapısını kontrol edin
+print(soup.prettify())  # HTML yapısını kontrol edin
+
+# Şikayetleri bul
+complaints = soup.find_all('div', class_='complaint-card__body')
+print(f"Bulunan Şikayet Sayısı: {len(complaints)}")  # Şikayetlerin sayısını yazdırın
+
+# Öne çıkan konular (anahtar kelimeler) listesini oluşturun
+highlighted_topics = [
+    'şikayet'
+    'İnternet',
+    'müşteri hizmetleri',
+    
+    'internetimi kullanamıyorum'
+]
+
+# Anahtar kelimelere göre şikayetleri filtreleme ve toplama
+filtered_complaints = []
+
+for complaint in complaints:
+    title = complaint.find('h3').text.strip() if complaint.find('h3') else 'Başlık bulunamadı'
+    description = complaint.find('p').text.strip() if complaint.find('p') else 'Açıklama bulunamadı'
+    
+    # Şikayet başlık veya açıklamalarında öne çıkan konular var mı kontrol et
+    if any(topic.lower() in (title.lower() + description.lower()) for topic in highlighted_topics):
+        filtered_complaints.append({
+            'title': title,
+            'description': description
+        })
+
+# Toplanan şikayetleri çıktı olarak gösterme
+for idx, complaint in enumerate(filtered_complaints, 1):
+    print(f"Şikayet {idx}:")
+    print(f"Başlık: {complaint['title']}")
+    print(f"Açıklama: {complaint['description']}")
+    print("-" * 80)
